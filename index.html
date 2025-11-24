@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Digital Tools for Science Communication</title>
+
+   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZLR6T0S6KT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        // --- 1. DEVELOPER EXCLUSION LOGIC ---
+        
+        // Check if the URL has ?dev=true (e.g. yoursite.com/?dev=true)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('dev') === 'true') {
+            localStorage.setItem('is_developer', 'true');
+            alert("Developer Mode Enabled: Your visits are now excluded from Analytics.");
+        }
+
+        // Check if we are on localhost (development environment)
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // Check if the developer cookie exists
+        const isDevCookie = localStorage.getItem('is_developer') === 'true';
+
+        // --- 2. INITIALIZE ANALYTICS ---
+
+        if (isLocalhost || isDevCookie) {
+            // If it's you, don't send data, but log to console so you know it's working locally
+            console.log("GA4: Analytics blocked (Developer Mode Active)");
+        } else {
+            // If it's a real user, send the data
+            gtag('config', 'G-ZLR6T0S6KT', {
+                'page_path': '/',
+                'page_title': 'Main Page',
+                'anonymize_ip': true // Adds an extra layer of privacy compliance
+            });
+        }
+    </script>
+
+
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #020a1a;
+            color: #ffffff;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated gradient background (for content below hero) */
+        .gradient-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #010610, #0a2033, #002d38, #010610);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Floating particles (CSS) */
+        .particle {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: rgba(0, 224, 192, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateY(-100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Header Load Animation --- */
+        @keyframes fadeInHero {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* --- Bounce Animation for Scroll Indicator --- */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+
+        /* --- Hero Section (Full Screen) --- */
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            text-align: center;
+            overflow: hidden;
+            background: #020a1a; /* Fallback */
+            padding-top: 0px;
+        }
+        
+        #hero-model {
+            /* UPDATED: Reverted to absolute so it scrolls WITH the content */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            --poster-color: transparent;
+        }
+        
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(ellipse at center, rgba(2, 10, 26, 0.4) 0%, rgba(2, 10, 26, 0.9) 70%, #020a1a 100%);
+        }
+
+        /* Header content is now placed *inside* the hero */
+        header {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            padding-bottom: 100px; 
+            padding-top: 0;
+            max-width: 1000px;
+            min-height: fit-content; 
+        }
+        
+        .header-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 70px; 
+            margin-top: 20px; 
+            margin-bottom: 75px; 
+            
+            /* --- Animation --- */
+            animation: fadeInHero 1s ease-out 0.2s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .header-logos img {
+            height: 60px;
+            transition: height 0.3s ease;
+        }
+        
+        /* Adjusted styles for individual logos */
+        .header-logos .ccmar-logo {
+            margin-top: 14px;
+        }
+
+        .header-logos .art-logo {
+            height: 70px;
+            margin-top: 12px;
+        }
+        
+        .header-logos .fct-logo {
+            height: 55px;
+            margin-top: 8px;
+        }
+
+        .header-logos .fam-logo {
+            height: 75px;
+            margin-top: 12px;
+        }
+        
+        h1 {
+            font-family: 'Raleway', sans-serif;
+            font-size: 5em; 
+            font-weight: 950;
+            margin-bottom: 30px; 
+            background: linear-gradient(135deg, #00e0c0, #00b0c0, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+            line-height: 1.1em; 
+            transition: text-shadow 0.2s ease-out;
+            
+            /* --- Animation --- */
+            animation: fadeInHero 1s ease-out 0.4s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* --- Subtitle Styles --- */
+        .subtitle-container {
+            margin-bottom: 35px;
+            font-size: 1.2em;
+            font-weight: 300;
+            color: #b0d0d0;
+            line-height: 1.5;
+            
+            /* --- Animation & Width Constraint --- */
+            animation: fadeInHero 1s ease-out 0.6s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .subtitle-container p {
+            color: #b0d0d0;
+        }
+
+        .subtitle-container p:first-child {
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(176, 208, 208, 0.6);
+            margin-bottom: 15px;
+        }
+        
+        .subtitle-project {
+            color: #00e0c0;
+            font-weight: 350;
+            display: block;
+            margin: 8px 0; 
+            position: relative;
+            padding-left: 20px;
+            line-height: 1.2;
+        }
+
+        
+        .header-description {
+            font-size: 1.05em;
+            color: rgb(197, 222, 222);
+            font-weight: 240;
+            max-width: 900px;
+            margin: 40px auto 0; 
+            line-height: 1.5;
+            
+            /* --- Animation --- */
+            animation: fadeInHero 1s ease-out 0.8s forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        /* --- Scroll Down Indicator --- */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 20px; 
+            left: 0;
+            width: 100%; /* Ensures centering on mobile */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            color: #00e0c0;
+            font-size: 0.9em;
+            font-weight: 300;
+            letter-spacing: 1px;
+            gap: 8px;
+            
+            animation: fadeInHero 1s ease-out 1.2s forwards;
+            opacity: 0;
+        }
+        
+        .scroll-indicator::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border-bottom: 2px solid #00e0c0;
+            border-right: 2px solid #00e0c0;
+            transform: rotate(45deg);
+            animation: bounce 2s infinite;
+        }
+
+
+        /* AR Viewer Section */
+        .ar-section {
+            margin: 60px 0;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 224, 192, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .ar-section h2 {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 35px;
+            text-align: center;
+            background: linear-gradient(135deg, #00e0c0, #00b0c0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+
+        model-viewer {
+            width: 100%;
+            height: 400px;
+            border-radius: 20px;
+            background: linear-gradient(180deg, #003d4d 0%, #020a1a 100%);
+        }
+
+        .model-credit {
+            text-align: center;
+            font-size: 0.75em; /* UPDATED: Smaller font */
+            color: #a0c0c0; 
+            margin-top: 15px;
+            font-style: italic;
+        }
+        
+        .model-credit a {
+            text-decoration: none;
+        }
+        
+        .model-credit a:hover {
+            text-decoration: underline;
+        }
+
+        .ar-button {
+            background: linear-gradient(135deg, #00e0c0, #00a0b0);
+            color: #020a1a;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 224, 192, 0.4);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ar-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 224, 192, 0.6);
+        }
+
+        /* Instructions */
+        .instructions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .instruction-card {
+            background: rgba(0, 224, 192, 0.05);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 224, 192, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .instruction-card:hover {
+            background: rgba(0, 224, 192, 0.1);
+            transform: translateY(-5px);
+            border-color: rgba(0, 224, 192, 0.4);
+        }
+
+        .instruction-card h3 {
+            color: #00e0c0;
+            font-size: 1.3em;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+        
+        .instruction-card h3 svg {
+            width: 22px;
+            height: 22px;
+            stroke: #00e0c0;
+            stroke-width: 2;
+            fill: none;
+            vertical-align: -4px;
+            margin-right: 8px;
+        }
+
+        .instruction-card p {
+            color: #b0d0d0;
+            line-height: 1.7;
+        }
+        
+        .ar-description {
+            font-size: 1em; 
+            color: #b0d0d0;
+            max-width: 1200px; 
+            margin: 40px auto 0;
+            line-height: 1.5;
+            font-weight: 100;
+            text-align: left; 
+        }
+        
+        .ar-description p:first-child {
+            font-size: 1em;
+            font-weight: 350;
+            color: #ffffff;
+            margin-bottom: 35px; 
+        }
+        
+        .ar-description p:not(:first-child) {
+            margin-bottom: 15px; 
+        }
+
+        .ar-description .step-list {
+            list-style: none;
+            padding-left: 0;
+            counter-reset: ar-step-counter; 
+            margin-top: 30px; 
+        }
+
+        .ar-description .step-list li {
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 35px;
+        }
+        
+        .ar-description .step-list li::before {
+            content: counter(ar-step-counter); 
+            counter-increment: ar-step-counter; 
+            position: absolute;
+            left: 0;
+            top: 2px; 
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #00e0c0;
+            background: rgba(0, 224, 192, 0.1);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+        }
+        
+        .ar-description .step-list li strong {
+            font-size: 1.2em;
+            color: #ffffff;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 3px;
+        }
+        
+        .ar-description .step-list li p {
+            color: #b0d0d0;
+            margin-top: 5px;
+            margin-bottom: 0; 
+        }
+
+        /* --- NEW: Tool Links Styling --- */
+        .tool-link {
+            color: #00e0c0;
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(0, 224, 192, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .tool-link:hover {
+            color: #ffffff;
+            border-bottom-color: #ffffff;
+            text-shadow: 0 0 10px rgba(0, 224, 192, 0.5);
+        }
+
+        .code-style {
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+
+
+        /* Data Animation Section */
+        .data-animation-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 224, 192, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            margin: 80px 0;
+            
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .data-animation-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .animation-grid {
+            display: grid;
+            grid-template-columns: 3fr 2fr; 
+            gap: 40px;
+            align-items: center;
+        }
+
+        .animation-text h2 {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #00e0c0, #00b0c0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .animation-banner-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 20px; 
+        }
+
+        .animation-banner {
+            background: rgba(0, 224, 192, 0.05);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 224, 192, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .animation-banner:hover {
+            background: rgba(0, 224, 192, 0.1);
+            transform: translateY(-5px);
+            border-color: rgba(0, 224, 192, 0.4);
+        }
+
+        .animation-banner p {
+            color: #bed3d3;
+            line-height: 1.7;
+            font-size: 1em;
+            font-weight: 200;
+            margin-bottom: 0; 
+        }
+
+
+        .animation-video-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .video-wrapper {
+            width: 100%;
+            overflow: hidden;
+            border-radius: 15px;
+        }
+
+        .animation-video-container video {
+            width: 100%;
+            height: auto;
+            background: transparent;
+            margin-bottom: 0px;
+            
+            /* --- Zoom and Pan --- */
+            transform: scale(1.2) translateX(-18%);
+            transform-origin: center center;
+        }
+        
+        .video-caption {
+            text-align: center;
+            font-size: 0.9em;
+            color: #a0c0c0; 
+            font-style: italic;
+            width: 80%;
+            margin: 0;
+            margin-top: 10px; 
+        }
+
+        /* Marker Demo Section */
+        .marker-demo-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 224, 192, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            margin: 80px 0;
+            text-align: center;
+        }
+
+        .marker-demo-section h2 {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 35px;
+            background: linear-gradient(135deg, #00e0c0, #00b0c0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.1em;
+            color: #b0d0d0;
+            max-width: 900px;
+            margin: 0 auto 80px;
+        }
+
+        .demo-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            text-align: left;
+            align-items: flex-start;
+        }
+
+        .poster-image-container a {
+            display: block;
+            text-decoration: none;
+        }
+        
+        .poster-image-container img {
+            width: 100%;
+            border-radius: 15px;
+            border: 2px solid rgba(0, 224, 192, 0.3);
+            transition: border-color 0.3s ease;
+        }
+        
+        .poster-image-container a:hover img {
+            border-color: rgba(0, 224, 192, 0.7);
+        }
+        
+        .poster-credit {
+            font-size: 0.8em;
+            font-style: italic;
+            color: #a0c0c0;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .demo-instructions h3 {
+            color: #00e0c0;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .demo-instructions ol {
+            list-style: none;
+            padding-left: 0;
+            counter-reset: desktop-step-counter; 
+        }
+
+        .demo-instructions li {
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 35px;
+        }
+        
+        .demo-instructions li::before {
+            content: counter(desktop-step-counter); 
+            counter-increment: desktop-step-counter; 
+            position: absolute;
+            left: 0;
+            top: 2px; 
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #00e0c0;
+            background: rgba(0, 224, 192, 0.1);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 25px;
+        }
+        
+        .demo-instructions li strong {
+            font-size: 1.2em;
+            color: #ffffff;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 3px;
+        }
+        
+        .demo-instructions li p {
+            color: #b0d0d0;
+            margin-top: 5px;
+            max-width: 90%; 
+        }
+        
+        .qr-code-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid #00e0c0;
+        }
+
+        .mobile-instructions {
+            display: none; /* Hidden by default */
+        }
+        
+        .mobile-instructions .cta-button {
+             margin-top: 40px; 
+             text-decoration: none;
+             display: inline-block;
+         }
+
+        /* --- NEW: Styles for Collapsible Tech Note --- */
+        .ar-tech-note {
+            /* --- UPDATED: Increased top margin for separation --- */
+            margin-top: 50px; 
+            
+            border: 1px solid rgba(0, 224, 192, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            
+            /* --- UPDATED: Box Width fixed --- */
+            width: 100%;
+            max-width: 490px;
+        }
+
+        .tech-note-toggle {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 224, 192, 0.1);
+            color: #00e0c0;
+            border: none;
+            text-align: left;
+            
+            /* --- UPDATED: Font size slightly reduced to 1.1em --- */
+            font-size: 1.1em; 
+            font-weight: 500;
+            
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .tech-note-toggle:hover {
+            background: rgba(0, 224, 192, 0.2);
+        }
+        
+        .tech-note-arrow {
+            transition: transform 0.3s ease;
+            font-size: 0.8em;
+        }
+        
+        .tech-note-toggle.active .tech-note-arrow {
+            transform: rotate(180deg);
+        }
+
+        .tech-note-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .tech-note-content p {
+            padding: 15px;
+            
+            /* --- UPDATED: Text smaller and thinner to match description --- */
+            font-size: 0.95em; 
+            color: #b0d0d0;
+            font-weight: 300;
+            
+            margin: 0;
+            line-height: 1.7; 
+        }
+        
+        .tech-note-content a {
+            color: #00e0c0;
+            text-decoration: none;
+        }
+        
+        .tech-note-content a:hover {
+            text-decoration: underline;
+        }
+        
+        .tech-note-content.open {
+            max-height: 600px; 
+        }
+        /* --- END: Tech Note Styles --- */
+        
+        /* Impact Section */
+        .impact-section {
+            margin: 80px 0;
+            text-align: center;
+        }
+
+        .impact-section h2 {
+            font-size: 2em; 
+            font-weight: 700;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #00e0c0, #00b0c0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .impact-description {
+            font-size: 1.1em;
+            color: #b0d0d0;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .impact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .impact-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 35px;
+            border-radius: 25px;
+            border: 1px solid rgba(0, 224, 192, 0.2);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .impact-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 224, 192, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .impact-card:hover::before {
+            opacity: 1;
+        }
+
+        .impact-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 224, 192, 0.5);
+            box-shadow: 0 20px 50px rgba(0, 224, 192, 0.2);
+        }
+        
+        .impact-icon {
+            margin-bottom: 15px;
+        }
+
+        .impact-icon svg {
+            width: 48px;
+            height: 48px;
+            stroke: #00e0c0;
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .impact-card h3 {
+            color: #00e0c0;
+            font-size: 1.25em; 
+            margin-bottom: 15px;
+            font-weight: 700;
+            text-align: center;
+
+        }
+
+        .impact-card p {
+            color: #b0d0d0;
+            line-height: 1.8;
+            text-align: center;
+
+        }
+
+        /* Call to Action */
+        .cta-section {
+            background: linear-gradient(135deg, rgba(0, 224, 192, 0.1), rgba(0, 160, 176, 0.1));
+            border-radius: 30px;
+            padding: 50px;
+            text-align: center;
+            margin: 80px 0;
+            border: 2px solid rgba(0, 224, 192, 0.3);
+        }
+
+        .cta-section h2 {
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .cta-section p {
+            font-size: 1.05em; 
+            color: #b0d0d0;
+            margin-bottom: 30px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #00e0c0, #00a0b0);
+            color: #020a1a;
+            padding: 18px 45px; /* Increased padding */
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1em; /* Increased font size */
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 224, 192, 0.5);
+        }
+
+        /* Styles to make CTA buttons stack */
+        .cta-button-stack .cta-button {
+            display: block;
+            margin: 15px auto;
+            max-width: 350px; 
+        }
+        
+        .cta-button-stack .cta-button:first-child {
+            margin-top: 0;
+        }
+
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 10px 0px 25px; 
+            border-top: 1px solid rgba(0, 224, 192, 0.2);
+            margin-top: 60px;
+        }
+
+        footer p {
+            color: #a0c0c0;
+            margin: 0px 0;
+        }
+
+        footer a {
+            color: #00e0c0;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #00b0c0;
+        }
+        
+        /* UPDATED: Removed text-decoration: underline */
+        footer p a,
+        footer .model-credit a {
+            color: #a0c0c0; 
+            font-weight: 400; 
+            text-decoration: none; 
+            transition: color 0.3s ease;
+            margin-bottom: 0;
+        }
+
+        footer p a:hover,
+        footer .model-credit a:hover {
+            color: #ffffff; 
+            text-decoration: underline;
+        }
+        
+        .developer-info {
+            color: #a0c0c0;
+            margin: 20px 0 20px; 
+            font-size: 1em;
+            line-height: 1.6; 
+        }
+        
+        /* This span will hold the developer name */
+        .dev-name {
+            color: #00e0c0;
+            font-weight: 600;
+        }
+
+        /* This link will hold the email icon */
+        .dev-email-link {
+            color: #00e0c0; /* SVG stroke color inherits this */
+            display: inline-flex;
+            vertical-align: middle; /* Align icon with text */
+            margin-left: 6px; /* Space after 'Get in touch' */
+            transition: color 0.3s ease;
+        }
+        
+        .dev-email-link:hover {
+            color: #00b0c0; /* Hover color */
+        }
+        
+        
+        .developer-info .email-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+
+        /* --- Mobile Responsive Styles --- */
+        @media (max-width: 768px) {
+            
+            /* --- Hero Section Fixes --- */
+            .hero-section {
+                height: auto; 
+                min-height: 100vh; 
+            }
+
+            header {
+                transform: translateY(0); 
+                padding: 10px 20px 100px 20px; 
+            }
+
+
+            @media (min-width: 769px) {
+                header {
+                    transform: translateY(-40px); /* Apply only on larger screens */
+                }
+            }
+
+            h1 {
+                font-size: 2.5em; 
+                font-weight: 1500;
+                line-height: 1.1em;
+                margin-bottom: 35px; 
+            }
+            
+            .header-logos {
+                row-gap: 0px;
+                column-gap: 25px;
+                margin-bottom: 40px; 
+                margin-top: 0; 
+                flex-wrap: wrap; 
+            }
+            .header-logos img {
+                height: 34px;
+            }
+            .header-logos .ccmar-logo {
+                margin-top: 4px;
+                order: 1;
+            }
+            .header-logos .art-logo {
+                height: 42px;
+                margin-top: 8px;
+                order: 3;
+            }
+            
+            .header-logos .fct-logo {
+                height: 30px;
+                margin-top: 4px;
+                order: 2;
+            }
+            
+            .header-logos img:nth-child(3) {
+                order: 4;
+            }
+
+            .header-logos .fam-logo {
+                height: 38px;
+                margin-top: 6px;
+                order: 5;
+            }
+            
+            .header-description {
+                font-size: 1em; 
+                padding: 0 10px;
+                margin-top: 30px; 
+            }
+            
+            .subtitle-container {
+                font-size: 1.1em;
+                margin-bottom: 25px; 
+            }
+            
+            /* --- AR Button Fix --- */
+            .ar-button {
+                font-size: 0.8em; 
+                padding: 10px 20px; 
+            }
+
+            .cta-button {
+                font-size: 1em;
+                padding: 16px 32px;
+            }
+
+            model-viewer {
+                height: 400px; 
+            }
+            
+            .ar-section h2 {
+                font-size: 1.8em;
+            }
+
+            .impact-section h2 {
+                font-size: 1.8em;
+            }
+
+            .ar-section {
+                padding: 25px 20px; 
+            }
+
+            .ar-description {
+                font-size: 1em; 
+                margin-top: 30px;
+            }
+
+            .animation-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .animation-text h2 {
+                font-size: 1.8em;
+            }
+            
+            .animation-banner p { 
+                font-size: 1em; 
+            }
+            
+            .animation-video-container {
+                align-items: center; 
+            }
+            
+            .video-caption {
+                width: 95%;
+            }
+
+            .demo-content-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .demo-instructions {
+                text-align: center;
+            }
+
+            .demo-instructions h3 {
+                text-align: left;
+            }
+            
+            .demo-instructions li {
+                text-align: left;
+            }
+            
+            /* Reset max-width for mobile */
+            .demo-instructions li p {
+                max-width: 100%;
+            }
+            
+            .desktop-instructions {
+                display: none;
+            }
+            
+            .mobile-instructions {
+                display: block;
+            }
+            
+            .mobile-instructions .cta-button {
+                width: 100%;
+                padding: 16px;
+                box-sizing: border-box;
+            }
+
+            .instruction-card p,
+            .impact-card p,
+            .demo-instructions li p,
+            .demo-subtitle,
+            .impact-description {
+                font-size: 1em;
+            }
+
+            .data-animation-section,
+            .marker-demo-section {
+                padding: 30px 20px; 
+            }
+            
+            .animation-banner {
+                padding: 25px 20px; 
+            }
+
+            .impact-card {
+                padding: 30px 20px; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="gradient-bg"></div>
+    
+    <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+    <div class="particle" style="left: 25%; animation-delay: 3s;"></div>
+    <div class="particle" style="left: 40%; animation-delay: 6s;"></div>
+    <div class="particle" style="left: 60%; animation-delay: 2s;"></div>
+    <div class="particle" style="left: 75%; animation-delay: 5s;"></div>
+    <div class="particle" style="left: 90%; animation-delay: 4s;"></div>
+
+    <div class="hero-section">
+        
+        <model-viewer
+            id="hero-model"
+            src="./models/blue-shark.glb"
+            alt="Juvenile Hammerhead Shark 3D Model"
+            autoplay
+            camera-orbit="-75deg 75deg 8m"
+            exposure="1.2"
+            environment-image="neutral"
+            shadow-intensity="1"
+            disable-zoom
+            disable-pan
+            disable-tap
+            interaction-prompt="none"
+        ></model-viewer>
+        
+        <div class="hero-overlay"></div>
+
+        <header>
+            <div class="header-logos">
+                <img src="./logos/CCMAR-logo.png" alt="CCMAR" class="ccmar-logo">
+                <img src="./logos/FCT-logo.png" alt="FCT Logo" class="fct-logo">
+                <img src="./logos/SOSF-logo.png" alt="Save Our Seas Foundation">
+                <img src="./logos/ART-logo.png" alt="ART Logo" class="art-logo">
+                <img src="./logos/FAM-logo.png" alt="FAM Logo" class="fam-logo">
+            </div>
+
+            <h1>Digital Tools for Ocean<br>Conservation</h1>
+            
+
+            <div class="subtitle-container">
+                <p>Developed under the projects</p>
+                <span class="subtitle-project">Essential Habitats for Smooth Hammerheads</span>
+                <span class="subtitle-project">Mapping Critical Habitats of Threatened Shark Species in the Algarve Coast</span>
+            </div>
+            
+            <p class="header-description">
+                This resource showcases how modern digital technologies, including Augmented Reality (AR) and sophisticated data visualisation, can help bridge complex movement ecology research and public outreach, enhancing the clarity, accessibility, and impact of scientific findings.
+            </p>
+        </header>
+        
+        <div class="scroll-indicator">
+            Scroll Down
+        </div>
+
+    </div>
+
+    <div class="container">
+        <div class="ar-section">
+            
+            <h2>Interactive 3D Models</h2>
+            
+            <model-viewer
+                src="./models/hammerhead_juvenile.glb"
+                ios-src="./models/hammerhead_juvenile.usdz"
+                alt="Juvenile Hammerhead Shark 3D Model"
+                auto-rotate
+                autoplay
+                camera-controls
+                ar
+                ar-modes="webxr scene-viewer quick-look"
+                environment-image="neutral"
+                shadow-intensity="1"
+                exposure="1.2"
+                camera-orbit="45deg 75deg 6.5m"
+                min-camera-orbit="auto auto 3m"
+                max-camera-orbit="auto auto 10m"
+                interaction-prompt="auto"
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%Crect fill='%23003d4d' width='100' height='100'/%3E%3Ctext x='50' y='50' font-size='40' text-anchor='middle' dy='.3em'%3E🦈%3C/text%3E%3C/svg%3E">
+                
+                <button slot="ar-button" class="ar-button">
+                    View in AR
+                </button>
+            </model-viewer>
+
+            <div class="instructions">
+                <div class="instruction-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                        Desktop
+                    </h3>
+                    <p>Click and drag to rotate. Scroll to zoom. Explore every angle of this juvenile hammerhead.</p>
+                </div>
+                <div class="instruction-card">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                        Mobile AR
+                    </h3>
+                    <p>Tap "View in AR" to place the shark in your space using your phone's camera.</p>
+                </div>
+            </div>
+            
+            <div class="ar-description">
+                <p>3D assets are powerful tools for science communication, transforming ecological data into interactive and engaging visualisations. Open-source software, AI-based modelling tools, and online repositories now make producing, displaying, and sharing high-quality 3D content easier than ever.</p>
+                
+                <ol class="step-list">
+                    <li>
+                        <strong>Conceptualise and Collect Data</strong>
+                        <p>Start by defining what you want to communicate — whether it’s a species’ anatomy, behaviour, or habitat — and gather the necessary reference material or field data (e.g., simple photos, drones, photogrammetry, or sonar-based instruments).</p>
+                    </li>
+                    <li>
+                        <strong>Create or Adapt Models</strong>
+                        <p>Build, modify, or animate 3D assets using free and open-source platforms such as <a href="https://www.blender.org/" target="_blank" rel="noopener noreferrer" class="tool-link">Blender</a>, or other modelling tools. Ready-made 3D models are also available through repositories like <a href="https://sketchfab.com/" target="_blank" rel="noopener noreferrer" class="tool-link">Sketchfab</a>, while novel AI-powered tools can automatically generate models from 2D images.</p>
+                    </li>
+                    <li>
+                        <strong>Share and Explore</strong>
+                        <p>Publish and embed interactive visualisations online using tools such as the <a href="https://modelviewer.dev/" target="_blank" rel="noopener noreferrer" class="tool-link code-style">&lt;model-viewer&gt;</a> web component, which allows 3D assets to be displayed and explored directly in the browser. These interactive experiences help make marine research more accessible, engaging, and educational for diverse audiences.</p>
+                    </li>
+                </ol>
+            </div>
+            </div>
+        
+       <div class="data-animation-section">
+            <div class="animation-grid">
+                
+                <div class="animation-text">
+                    <h2>Visualising Unseen Journeys</h2>
+
+                    <div class="animation-banner-stack">
+                        
+                        <div class="animation-banner">
+                            <p>
+                                Beyond static 3D models, data-driven animations can bring ecological datasets to life — transforming numbers, tracks, and time series into dynamic visual stories. These animations help reveal patterns of movement, habitat use, and behaviour that might otherwise remain hidden in spreadsheets or maps.
+                            </p>
+                        </div>
+
+                        <div class="animation-banner">
+                            <p>
+                                Using programming environments such as R, researchers can generate sequential plots or maps that illustrate animal tracks, environmental changes, or temporal patterns. These frames can then be combined and rendered into smooth animations using video processing tools like <i>FFmpeg</i>, resulting in impactful visual content.
+                            </p>
+                        </div>
+
+                        <div class="animation-banner">
+                            <p>
+                                By turning raw data into motion, these visualisations make complex ecological processes more intuitive and engaging — helping researchers, policymakers, and the public better grasp the dynamics of marine life and ecosystems.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="animation-video-container">
+                    
+                    <div class="video-wrapper">
+                        <video 
+                            muted 
+                            loop 
+                            playsinline
+                            autoplay  disablepictureinpicture
+                            width="100%"
+                            height="auto">
+    
+                            <source src="./media/meagre-map-animation.mov" type="video/mp4; codecs=hvc1">
+    
+                            <source src="./media/meagre-map-animation.webm" type="video/webm">
+    
+                            Your browser does not support the video format.
+                        </video>
+                    </div>
+
+                    <p class="video-caption">
+                        Example: reconstructed movement of tagged meagre (<i>Argyrosomus regius</i>) in the Iberian Peninsula.
+                    </p>
+                </div>
+            </div>
+        </div>
+       <div class="marker-demo-section">
+            
+            <h2>Image-triggered AR experience</h2>
+            
+            <p class="demo-subtitle">This example shows marker-based AR, where a physical object (like this scientific poster) acts as a trigger. By scanning the poster, a viewer can unlock a hidden digital layer — supplementary videos, 3D models, or data visualizations. This approach connects physical outreach materials directly to dynamic digital content, enriching events like scientific conferences or museum exhibits.</p>
+            
+            <div class="demo-content-grid">
+                <div class="poster-image-container">
+                    <a href="./media/BLS8-poster.png" target="_blank" rel="noopener noreferrer">
+                        <img src="./media/BLS8-poster.png" alt="Scientific Poster AR Target Image">
+                    </a>
+                    <p class="poster-credit">Scientific poster presented at the 8th International Biologging Symposium (Tokyo, Japan).</p>
+                </div>
+                
+                <div class="demo-instructions">
+                    
+                    <div class="desktop-instructions">
+                        <h3>How to try it (Desktop):</h3>
+                        <ol>
+                            <li>
+                                <strong>Scan the QR Code</strong>
+                                <p>Use your phone's camera to scan this code. This will open the AR experience in your mobile browser.</p>
+                                <img src="./poster-ar/QR-code.png" alt="QR Code to launch AR experience" class="qr-code-img">
+                            </li>
+                            <li>
+                                <strong>Point at the Poster</strong>
+                                <p>Once the camera feed opens, point your phone at the poster image on the left side of your screen.</p>
+                            </li>
+                            <li>
+                                <strong>See the Poster Come to Life</strong>
+                                <p>The poster will unlock a hidden digital layer, showing videos and 3D models directly on your screen.</p>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mobile-instructions">
+                        <h3>How to try it (Mobile):</h3>
+                        <p>Tap the button below to launch the experience.</p>
+                        <a href="./poster-ar/poster-ar.html" target="_blank" class="cta-button">Launch AR Demo</a>
+                        <p style="margin-top: 20px;">After launching, you'll need to <strong>find the poster image</strong> (e.g., on another computer screen or a physical print-out) and point your camera at it.</p>
+                    </div>
+                    
+                    <div class="ar-tech-note">
+                        <button class="tech-note-toggle" id="tech-note-btn">
+                            <span>Implementation Note</span>
+                            <span class="tech-note-arrow">▼</span>
+                        </button>
+                        <div class="tech-note-content" id="tech-note-body">
+                            <p>This demonstration was built using <a href="https://hiukim.github.io/mind-ar-js-doc/" target="_blank">MindAR</a>, an open-source web-based augmented reality library that enables marker-based AR directly in web browsers without requiring dedicated apps.</p>
+                            <p>The poster image serves as a natural feature tracker (image target), allowing the browser to recognize it and overlay digital content in real-time. This approach works best with larger-scale printed posters or markers, resulting in more stable AR experiences at conferences, exhibitions, or educational settings.</p>
+                        </div>
+                    </div>
+                    </div>
+            </div>
+        </div>
+
+        <div class="impact-section">
+            
+            <h2>Translating Science Through Digital Media</h2>
+            
+            <p class="impact-description">
+                Each example on this page follows three guiding principles for effective and responsible science communication in ocean research.
+            </p>
+            
+            <div class="impact-grid">
+                
+                <div class="impact-card">
+                    <div class="impact-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                    </div>
+                    <h3>Science First</h3>
+                        <p>Every visualisation and AR model begins with solid scientific data. By grounding the work in rigorous movement ecology research, we can ensure that accessibility never comes at the expense of scientific accuracy.</p>                </div>
+
+                <div class="impact-card">
+                    <div class="impact-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v0A2.5 2.5 0 0 1 9.5 7v0A2.5 2.5 0 0 1 7 9.5v0A2.5 2.5 0 0 1 9.5 12v0A2.5 2.5 0 0 1 7 14.5v0A2.5 2.5 0 0 1 9.5 17v0A2.5 2.5 0 0 1 7 19.5v0A2.5 2.5 0 0 1 9.5 22"></path>
+                             <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v0A2.5 2.5 0 0 0 14.5 7v0A2.5 2.5 0 0 0 17 9.5v0A2.5 2.5 0 0 0 14.5 12v0A2.5 2.5 0 0 0 17 14.5v0A2.5 2.5 0 0 0 14.5 17v0A2.5 2.5 0 0 0 17 19.5v0A2.5 2.5 0 0 0 14.5 22"></path>
+                        </svg>
+                    </div>
+                    <h3>Engagement Through Interactivity</h3>
+                    <p>Interactive digital tools can transform how we experience ecological data. Whether through <strong>Augmented Reality (AR)</strong> or animated data-driven visuals, our goal is to make the underlying science more engaging, interpretable, and memorable.</p>
+                </div>
+
+                <div class="impact-card">
+                    <div class="impact-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="16 18 22 12 16 6"></polyline>
+                            <polyline points="8 6 2 12 8 18"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Open and Reproducible</h3>
+                    <p>All materials are created using open-source tools — from spatial analyses in <strong>R</strong> to 3D modelling in <strong>Blender</strong> and browser-based <strong>WebXR</strong> frameworks. This promotes reproducibility and broader collaboration across the marine science community.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h2>Explore the Full Projects</h2>
+            <p>Learn more about our projects on the nursery habitats, spatial ecology, and conservation of smooth hammerhead and blue sharks, and the methodologies behind this work.</p>
+            <div class="cta-button-stack">
+                <a href="https://saveourseas.com/project/essential-habitats-for-smooth-hammerheads/" target="_blank" class="cta-button">Visit SOSF Project Page</a>
+                <a href="https://www.fam.foundation/post/mapping-critical-habitats-of-threatened-shark-species-in-the-algarve-coast-ccmar-algarve-univers" target="_blank" class="cta-button">VISIT FAM PROJECT PAGE</a>
+            </div>
+        </div>
+
+
+       <footer>
+            
+            <div class="developer-info">
+                Developed by 
+                <a href="https://saveourseas.com/project-leader/miguel-gandra/" target="_blank" rel="noopener noreferrer" class="dev-name">
+                    Miguel Gandra
+                </a>
+                <br>
+                Get in touch 
+                <a href="mailto:m3gandra@gmail.com" class="dev-email-link" aria-label="Email Miguel Gandra">
+                    <svg class="email-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </a>
+            </div>
+            
+            <p class="model-credit" style="margin-top: 0; margin-bottom: 0">
+                3D Model 'Juvenile Hammerhead' by sharkingaround is licensed under 
+                <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+            </p>
+
+            <p class="model-credit" style="margin-top: 0; margin-bottom: 15px;">
+                3D Model 'The Fish Particle' by Loïc Norgeot is licensed under 
+                <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+            </p>
+            
+            <p style="margin-top: 0px; font-size: 0.8em;"> Page content licensed under <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+            </p>
+            
+        </footer>
+        </div>
+
+    <script>
+        // Separate script for the main model-viewer
+        const modelViewer = document.querySelector('.ar-section model-viewer');
+        
+        modelViewer.addEventListener('load', () => {
+            console.log('Interactive model loaded successfully');
+        });
+
+        // Add more particles dynamically
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 10 + 's';
+            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            // Append to the body, so it's behind the hero
+            document.body.appendChild(particle); 
+            
+            setTimeout(() => particle.remove(), 25000);
+        }
+
+        setInterval(createParticle, 1000);
+
+        
+        /* --- SCRIPT FOR FLOATING SHADOW --- */
+        
+        const header = document.querySelector('header');
+        const h1 = document.querySelector('h1');
+        const shadowStrength = 30; // Max shadow offset in pixels
+
+        header.addEventListener('mousemove', (e) => {
+            const rect = header.getBoundingClientRect();
+            
+            const xPercent = (e.clientX - rect.left) / rect.width;
+            const yPercent = (e.clientY - rect.top) / rect.height;
+
+            const rotateYValue = xPercent - 0.5;
+            const rotateXValue = yPercent - 0.5;
+
+            const shadowX = (rotateYValue * -1) * shadowStrength; 
+            const shadowY = (rotateXValue * -1) * shadowStrength;
+
+            h1.style.textShadow = `${shadowX}px ${shadowY}px 25px rgba(0, 0, 0, 0.6)`;
+        });
+
+        header.addEventListener('mouseleave', () => {
+            h1.style.textShadow = '0 5px 15px rgba(0, 0, 0, 0.3)';
+        });
+        
+        
+        /* --- SCRIPT FOR VIDEO INTERSECTION OBSERVER --- */
+        
+        // Select the new section and its video
+        const animSection = document.querySelector('.data-animation-section');
+        const animVideo = animSection.querySelector('video');
+
+        // Configure the observer
+        const videoObserverOptions = {
+            root: null, // Use the viewport as the root
+            threshold: 0.3 // Trigger when 30% of the section is visible
+        };
+
+        // Create the observer
+        const videoObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                // When the section is 30% visible
+                if (entry.isIntersecting) {
+                    
+                    // 1. Add the 'is-visible' class to trigger the CSS fade-in
+                    animSection.classList.add('is-visible');
+                    
+                    // 2. Play the video
+                    animVideo.play().catch(error => {
+                        // Log a warning if autoplay is prevented by the browser
+                        console.warn("Video autoplay prevented:", error);
+                    });
+
+                    // 3. Stop observing this section to prevent re-triggering
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, videoObserverOptions);
+
+        // Start observing the animation section
+        videoObserver.observe(animSection);
+        
+        /* --- SCRIPT FOR COLLAPSIBLE INFO BOX --- */
+        const techNoteBtn = document.getElementById('tech-note-btn');
+        const techNoteBody = document.getElementById('tech-note-body');
+        
+        if (techNoteBtn && techNoteBody) {
+            techNoteBtn.addEventListener('click', () => {
+                // Toggle button state for arrow rotation
+                techNoteBtn.classList.toggle('active');
+                // Toggle content visibility
+                techNoteBody.classList.toggle('open');
+            });
+        }
+        /* --- END NEW SCRIPT --- */
+
+    </script>
+
+   <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // 1. Define a helper function to send data to Google
+            function sendAnalyticsEvent(eventName) {
+                // Check if we are in Developer Mode first
+                const isDevMode = localStorage.getItem('is_developer') === 'true';
+                
+                if (!isDevMode && typeof gtag === 'function') {
+                    // Use the eventName passed to the function
+                    gtag('event', eventName, {
+                        'event_category': 'AR Interaction',
+                        'transport_type': 'beacon'
+                    });
+                    console.log(`Analytics: Event '${eventName}' sent.`);
+                } else if (isDevMode) {
+                    console.log(`Analytics: Event '${eventName}' BLOCKED (Dev Mode).`);
+                }
+            }
+
+            // 2. Track the 3D Model Viewer Button (Shark)
+            const sharkButton = document.querySelector('.ar-button');
+            if (sharkButton) {
+                sharkButton.addEventListener('click', function() {
+                    sendAnalyticsEvent('ar_model_shark_opened');
+                });
+            }
+
+            // 3. Track the Marker/Poster AR Demo Button (Mobile CTA)
+            // We target the specific link inside the mobile instructions
+            const posterButton = document.querySelector('.mobile-instructions .cta-button');
+            if (posterButton) {
+                posterButton.addEventListener('click', function() {
+                    sendAnalyticsEvent('ar_poster_demo_opened');
+                });
+            }
+        });
+    </script>
+
+
+</body>
+</html>

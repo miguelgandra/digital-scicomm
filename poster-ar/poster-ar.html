@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poster AR Experience - MindAR</title>
+
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.4.0/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZLR6T0S6KT"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        // --- DEVELOPER EXCLUSION LOGIC ---
+        
+        // 1. Check URL for ?dev=true to set the cookie
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('dev') === 'true') {
+            localStorage.setItem('is_developer', 'true');
+            alert("Developer Mode Enabled: Your visits are now excluded from Analytics.");
+        }
+
+        // 2. Check Environment
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isDevCookie = localStorage.getItem('is_developer') === 'true';
+
+        // 3. Initialize GA only if NOT a developer
+        if (isLocalhost || isDevCookie) {
+            console.log("GA4: Analytics blocked (Developer Mode Active)");
+        } else {
+            gtag('config', 'G-ZLR6T0S6KT', {
+                'page_path': '/poster-ar/poster-ar.html',
+                'page_title': 'Poster AR Demo',
+                'anonymize_ip': true
+            });
+        }
+    </script>
+
+    <script>
+        let userInteracted = false;
+        let videoReady = false;
+
+        function handleUserInteraction() {
+            if (userInteracted) return;
+            console.log('✅ User interaction detected');
+            userInteracted = true;
+            
+            const video = document.querySelector('#posterVideo');
+            const posterHandlerEntity = document.querySelector('[poster-handler]');
+            
+            if (video) {
+                video.load(); 
+                video.play().then(() => {
+                    console.log('✅ Video preloaded successfully');
+                    video.pause();
+                    video.currentTime = 0;
+                    videoReady = true; 
+
+                    if (posterHandlerEntity) {
+                        const posterHandler = posterHandlerEntity.components['poster-handler'];
+                        if (posterHandler && posterHandler.targetVisible) {
+                            console.log('Target was already visible. Playing video now.');
+                            video.currentTime = 0;
+                            video.play().catch(e => {
+                                console.error('❌ Delayed video play error:', e);
+                                if (posterHandler.playButton) {
+                                    posterHandler.playButton.setAttribute('visible', true);
+                                }
+                            });
+                        }
+                    }
+                }).catch(e => {
+                    console.error('❌ Video preload error:', e);
+                });
+            }
+        }
+
+        // --- UPDATED CLICKABLE COMPONENT WITH TRACKING ---
+        AFRAME.registerComponent('clickable', {
+            schema: {
+                url: {type: 'string', default: ''}
+            },
+            init: function() {
+                const self = this;
+                this.onClick = function() {
+                    console.log('✅ Clickable element clicked:', self.data.url);
+                    
+                    // GA4 Tracking: Link Clicked
+                    const isDev = localStorage.getItem('is_developer') === 'true';
+                    if (typeof gtag === 'function' && !isDev) {
+                        gtag('event', 'ar_link_clicked', {
+                            'event_category': 'AR Interaction',
+                            'event_label': self.data.url
+                        });
+                    }
+
+                    if (self.data.url) {
+                        window.open(self.data.url, '_blank');
+                    }
+                };
+                
+                this.el.addEventListener('click', this.onClick);
+            },
+            remove: function() {
+                this.el.removeEventListener('click', this.onClick);
+            }
+        });
+
+       AFRAME.registerComponent('poster-handler', {
+            init: function() {
+                console.log('Poster handler initialized.');
+                
+                // --- Core Elements ---
+                this.poster = this.el.querySelector('#static-poster');
+                this.videoPlane = this.el.querySelector('#video-plane');
+                this.video = document.querySelector('#posterVideo');
+                this.panelOverlay = this.el.querySelector('#panel-overlay');
+                
+                // --- Models ---
+                this.fishSchoolModel = this.el.querySelector('#fish-school-model'); 
+                this.psatModel = this.el.querySelector('#psat-model'); 
+
+                // --- Interface Elements ---
+                this.sideContent = this.el.querySelector('#side-content-column');
+                this.playButton = this.el.querySelector('#play-button-group');
+                this.playButtonPlane = this.el.querySelector('#play-button-plane-rounded'); 
+
+                // --- Panel 1: Abacus (Chronogram) ---
+                this.showAbacusButton = this.el.querySelector('#show-abacus-button'); 
+                this.chronogramPanelGroup = this.el.querySelector('#chronogram-panel-group');
+                this.showAbacusPlane = this.el.querySelector('#show-abacus-plane');
+                this.closeAbacusPlane = this.el.querySelector('#close-abacus-plane'); 
+
+                // --- Panel 2: Maps (Home Ranges) ---
+                this.showMapsButton = this.el.querySelector('#show-maps-button');
+                this.mapsPanelGroup = this.el.querySelector('#maps-panel-group');
+                this.showMapsPlane = this.el.querySelector('#show-maps-plane');
+                this.closeMapsPlane = this.el.querySelector('#close-maps-plane'); 
+
+                // --- Panel 3: PSAT Info ---
+                this.psatPanelGroup = this.el.querySelector('#psat-panel-group');
+                this.closePsatPlane = this.el.querySelector('#close-psat-plane'); 
+
+                this.targetVisible = false;
+                this.videoHasPlayed = false;
+
+                // --- Video Logic ---
+                this.onPlayButtonClick = (event) => {
+                    if (this.video && this.targetVisible && !this.videoHasPlayed) {
+                        this.video.currentTime = 0; 
+                        this.video.play().catch(e => console.error('❌ Button play error:', e));
+                    }
+                };
+                
+                this.onVideoPlay = () => {
+                    if (this.playButton) this.playButton.setAttribute('visible', false);
+                };
+
+                this.onVideoEnded = () => {
+                    this.videoHasPlayed = true; 
+                    if (!this.targetVisible) return;
+                    this.showPosterContent();
+                };
+
+                // --- State Management ---
+                this.showPosterContent = () => {
+                    console.log('Showing poster and models.');
+                    this.videoPlane.setAttribute('visible', false);
+                    this.playButton.setAttribute('visible', false); 
+                    this.poster.setAttribute('visible', true);
+                    
+                    // Show Models
+                    this.fishSchoolModel.setAttribute('visible', true);
+                    this.psatModel.setAttribute('visible', true); 
+
+                    this.sideContent.setAttribute('visible', true);
+                    this.showAbacusButton.setAttribute('visible', true); 
+                    this.showMapsButton.setAttribute('visible', true);
+                    this.fishSchoolModel.setAttribute('animation-mixer', 'timeScale: 1');
+                };
+
+                this.onTargetFound = () => {
+                    console.log('Target found.');
+                    this.targetVisible = true;
+                    
+                    // --- GA4 TRACKING: SUCCESSFUL SCAN ---
+                    const isDev = localStorage.getItem('is_developer') === 'true';
+                    if (typeof gtag === 'function' && !isDev) {
+                        gtag('event', 'ar_target_detected', {
+                            'event_category': 'AR Engagement',
+                            'event_label': 'Poster Target Found'
+                        });
+                    }
+                    // -------------------------------------
+
+                    if (this.videoHasPlayed) {
+                        this.showPosterContent();
+                    } else {
+                        this.poster.setAttribute('visible', false);
+                        this.fishSchoolModel.setAttribute('visible', false);
+                        this.psatModel.setAttribute('visible', false); 
+                        this.sideContent.setAttribute('visible', false);
+                        this.showAbacusButton.setAttribute('visible', false); 
+                        this.showMapsButton.setAttribute('visible', false);
+                        this.videoPlane.setAttribute('visible', true);
+                        
+                        if (this.video.currentTime > 0) {
+                            this.video.play().catch(e => {
+                                this.playButton.setAttribute('visible', true);
+                            });
+                        }
+                        else if (userInteracted && videoReady) {
+                            this.video.currentTime = 0;
+                            this.video.play().catch(e => {
+                                this.playButton.setAttribute('visible', true);
+                            });
+                        } 
+                        else {
+                            this.playButton.setAttribute('visible', true);
+                        }
+                    }
+                };
+
+                this.onTargetLost = () => {
+                    console.log('Target lost.');
+                    this.targetVisible = false;
+                    this.playButton.setAttribute('visible', false); 
+                    this.poster.setAttribute('visible', false);
+                    this.fishSchoolModel.setAttribute('visible', false);
+                    this.psatModel.setAttribute('visible', false); 
+                    this.videoPlane.setAttribute('visible', false);
+                    this.sideContent.setAttribute('visible', false); 
+                    this.showAbacusButton.setAttribute('visible', false); 
+                    this.showMapsButton.setAttribute('visible', false);
+                    
+                    // Close all panels
+                    this.chronogramPanelGroup.setAttribute('visible', false); 
+                    this.mapsPanelGroup.setAttribute('visible', false);
+                    this.psatPanelGroup.setAttribute('visible', false); 
+                    this.panelOverlay.setAttribute('visible', false); 
+
+                    if (this.fishSchoolModel) {
+                        this.fishSchoolModel.setAttribute('animation-mixer', 'timeScale: 0');
+                    }
+                    if (!this.videoHasPlayed && this.video) {
+                        this.video.pause(); 
+                    }
+                };
+
+                // --- UNIFIED CLOSING LOGIC ---
+                // This function closes ANY open panel and resets the PSAT model
+                this.closeAllPanels = () => {
+                    console.log("Closing all panels and resetting PSAT");
+                    
+                    // 1. Hide all panels
+                    this.chronogramPanelGroup.setAttribute('visible', false);
+                    this.mapsPanelGroup.setAttribute('visible', false);
+                    this.psatPanelGroup.setAttribute('visible', false);
+                    this.panelOverlay.setAttribute('visible', false);
+
+                    // 2. Show PSAT Model
+                    this.psatModel.setAttribute('visible', true);
+
+                    // 3. Resume/Ensure Rotation Animation
+                    this.psatModel.setAttribute('animation', 'property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear');
+                };
+
+
+                // --- OPENING LOGIC ---
+
+                // 1. ABACUS
+                this.onShowAbacusClick = () => {
+                    this.chronogramPanelGroup.setAttribute('visible', true);
+                    this.panelOverlay.setAttribute('visible', true); 
+                    this.mapsPanelGroup.setAttribute('visible', false);
+                    this.psatPanelGroup.setAttribute('visible', false);
+                    
+                    // Hide PSAT Model (Clean view)
+                    this.psatModel.setAttribute('visible', false);
+                };
+
+                // 2. MAPS
+                this.onShowMapsClick = () => {
+                    this.mapsPanelGroup.setAttribute('visible', true);
+                    this.panelOverlay.setAttribute('visible', true);
+                    this.chronogramPanelGroup.setAttribute('visible', false);
+                    this.psatPanelGroup.setAttribute('visible', false);
+                    
+                    // Hide PSAT Model (Clean view)
+                    this.psatModel.setAttribute('visible', false);
+                };
+
+                // 3. PSAT INFO
+                this.onPsatClick = () => {
+                    this.psatPanelGroup.setAttribute('visible', true);
+                    this.panelOverlay.setAttribute('visible', true);
+                    
+                    this.mapsPanelGroup.setAttribute('visible', false);
+                    this.chronogramPanelGroup.setAttribute('visible', false);
+
+                    // Pause rotation for readability while reading
+                    this.psatModel.removeAttribute('animation');
+                };
+
+
+                // --- Event Listeners ---
+                this.video.addEventListener('ended', this.onVideoEnded);
+                this.video.addEventListener('play', this.onVideoPlay);
+                this.el.addEventListener('targetFound', this.onTargetFound);
+                this.el.addEventListener('targetLost', this.onTargetLost);
+                this.playButtonPlane.addEventListener('click', this.onPlayButtonClick);
+                
+                // Open Handlers
+                this.showAbacusPlane.addEventListener('click', this.onShowAbacusClick);
+                this.showMapsPlane.addEventListener('click', this.onShowMapsClick);
+                this.psatModel.addEventListener('click', this.onPsatClick);
+
+                // Close Handlers (All point to the Unified Function)
+                if(this.closeAbacusPlane) this.closeAbacusPlane.addEventListener('click', this.closeAllPanels);
+                if(this.closeMapsPlane) this.closeMapsPlane.addEventListener('click', this.closeAllPanels);
+                if(this.closePsatPlane) this.closePsatPlane.addEventListener('click', this.closeAllPanels);
+            },
+
+            remove: function() {
+                this.video.removeEventListener('ended', this.onVideoEnded);
+                this.video.removeEventListener('play', this.onVideoPlay);
+                this.el.removeEventListener('targetFound', this.onTargetFound);
+                this.el.removeEventListener('targetLost', this.onTargetLost);
+                
+                this.playButtonPlane?.removeEventListener('click', this.onPlayButtonClick);
+                this.showAbacusPlane?.removeEventListener('click', this.onShowAbacusClick);
+                this.showMapsPlane?.removeEventListener('click', this.onShowMapsClick);
+                this.psatModel?.removeEventListener('click', this.onPsatClick);
+                
+                // Remove Close Listeners
+                this.closeAbacusPlane?.removeEventListener('click', this.closeAllPanels);
+                this.closeMapsPlane?.removeEventListener('click', this.closeAllPanels);
+                this.closePsatPlane?.removeEventListener('click', this.closeAllPanels);
+            }
+        });
+    </script>
+    <style>
+        body { 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+        }
+        #starter-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); color: #fff; z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column; text-align: center;
+            font-size: 1.3em; cursor: pointer;
+        }
+        #starter-overlay h1 { font-size: 1.5em; margin: 0; }
+        #starter-overlay p { 
+            font-size: 1.1em; margin: 15px 20px 0; 
+            max-width: 400px; color: #eee; line-height: 1.5; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="starter-overlay" onclick="handleUserInteraction(); this.style.display='none';">
+        <h1>🦈 Tap to Start AR</h1>
+        <p>Point your camera at the poster.</p>
+    </div>
+
+    <a-scene
+        mindar-image="imageTargetSrc: https://miguelgandra.github.io/digital-scicomm/poster-ar/BLS8-poster-target.mind;
+                      filterMinCF:0.0001;
+                      filterBeta: 0.1;
+                      missTolerance: 5;
+                      warmupTolerance: 3;"
+        color-space="sRGB"
+        renderer="colorManagement: true, physicallyCorrectLights"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+    >
+
+        <a-assets>
+            <video
+                id="posterVideo"
+                src="https://miguelgandra.github.io/digital-scicomm/media/BLS8-animation.mp4"
+                preload="auto"
+                muted
+                playsinline
+                webkit-playsinline
+                crossorigin="anonymous"
+            ></video>
+            
+            <a-asset-item
+                id="fishSchoolModel"
+                src="https://miguelgandra.github.io/digital-scicomm/models/the_fish_particle.glb"
+            ></a-asset-item>
+
+            <a-asset-item
+                id="psatModel"
+                src="https://miguelgandra.github.io/digital-scicomm/models/PSAT.glb"
+            ></a-asset-item>
+
+            <img 
+                id="posterImage" 
+                src="https://miguelgandra.github.io/digital-scicomm/media/BLS8-poster-train.jpg" 
+                crossorigin="anonymous">
+
+            <img id="paperImage" src="https://miguelgandra.github.io/digital-scicomm/media/Paper.jpg" crossorigin="anonymous">
+            <img id="profileImage" src="https://miguelgandra.github.io/digital-scicomm/media/Profile.png" crossorigin="anonymous">
+
+            <img id="chronogramImage" src="https://miguelgandra.github.io/digital-scicomm/media/chronogram-panel.jpg" crossorigin="anonymous">
+            <img id="homeRangesImage" src="https://miguelgandra.github.io/digital-scicomm/media/home-ranges-panel.png" crossorigin="anonymous">
+
+        </a-assets>
+
+        <a-camera
+            position="0 0 0"
+            look-controls="enabled: false"
+            cursor="fuse: false; rayOrigin: mouse;"
+            raycaster="far: 10000; objects: .clickable"
+        ></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0" poster-handler>
+            
+            <a-plane
+                id="static-poster"
+                src="#posterImage"
+                position="0 0 0"
+                rotation="0 0 0"
+                width="1"
+                height="1.41"
+                visible="false"
+            ></a-plane>
+
+            <a-plane
+                id="video-plane"
+                position="0 0 0"
+                rotation="0 0 0"
+                width="1"
+                height="1.41"
+                material="src: #posterVideo; shader: flat;"
+                visible="false"
+            ></a-plane>
+            
+            <a-entity
+                id="fish-school-model"
+                gltf-model="#fishSchoolModel"
+                position="-0.33 0.35 0.05"
+                rotation="0 0 0"
+                scale="0.3 0.3 0.3" 
+                visible="false"
+                animation-mixer="clip: *; loop: repeat; timeScale: 0"
+            ></a-entity>
+
+            <a-entity
+                id="psat-model"
+                class="clickable"
+                gltf-model="#psatModel"
+                position="0.3 -0.4 0.5" 
+                rotation="0 0 0"
+                scale="0.3 0.3 0.3" 
+                visible="false"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear"
+            ></a-entity>
+            
+            <a-entity 
+                id="side-content-column" 
+                position="-0.75 -0.05 0" 
+                rotation="0 10 0"
+                visible="false"
+            >
+                <a-entity id="paper-group">
+                    <a-image 
+                        src="#paperImage" 
+                        width="0.32" 
+                        height="0.48" 
+                        position="0 0.265 0"
+                        class="clickable"
+                        clickable="url: https://doi.org/10.1016/j.ocecoaman.2025.107782"
+                    ></a-image> 
+                    
+                    <a-entity position="0 -0.025 0.005">
+                        <a-plane 
+                            id="paper-button-rounded" 
+                            color="#008080" 
+                            width="0.4" 
+                            height="0.07"
+                            class="clickable"
+                            clickable="url: https://doi.org/10.1016/j.ocecoaman.2025.107782"
+                            animation="property: material.opacity; from: 0.6; to: 1.0; dur: 750; dir: alternate; easing: easeInOutSine; loop: true"
+                        ></a-plane>
+                        <a-text value="Read the Full Paper" align="center" color="#FFF" scale="0.09 0.09 0.09" position="0 0 0.01" wrap-count="20"></a-text>
+                    </a-entity>
+                </a-entity>
+
+                <a-entity id="profile-group" position="0 -0.415 0">
+                    <a-image 
+                        src="#profileImage" 
+                        width="0.24" 
+                        height="0.24" 
+                        position="0 0.145 0"
+                        class="clickable"
+                        clickable="url: mailto:m3gandra@gmail.com"
+                    ></a-image> 
+                    
+                    <a-entity position="0 -0.025 0.005">
+                        <a-plane 
+                            id="profile-button-rounded" 
+                            color="#008080" 
+                            width="0.3" 
+                            height="0.07"
+                            class="clickable"
+                            clickable="url: mailto:m3gandra@gmail.com"
+                            animation="property: material.opacity; from: 0.6; to: 1.0; dur: 750; dir: alternate; easing: easeInOutSine; loop: true; delay: 300"
+                        ></a-plane>
+                        <a-text value="Get in Touch" align="center" color="#FFF" scale="0.09 0.09 0.09" position="0 0 0.01" wrap-count="20"></a-text>
+                    </a-entity>
+                </a-entity>
+            </a-entity>
+            
+            <a-entity
+                id="play-button-group"
+                position="0 0 0.05"
+                visible="false"
+            >
+                <a-plane
+                    id="play-button-plane-rounded"
+                    class="clickable"
+                    color="#008080"
+                    width="0.3"
+                    height="0.05"
+                    animation="property: material.opacity; from: 0.6; to: 1.0; dur: 750; dir: alternate; easing: easeInOutSine; loop: true"
+                ></a-plane>
+                <a-text
+                    value="Play Animation"
+                    align="center"
+                    color="#FFF"
+                    position="0 0 0.01"
+                    scale="0.17 0.17 0.17"
+                    wrap-count="20"
+                ></a-text>
+            </a-entity>
+
+            <a-entity
+                id="show-abacus-button"
+                position="-0.340 0.420 0.01" 
+                visible="false"
+            > 
+                <a-plane 
+                    id="show-abacus-plane" 
+                    class="clickable" 
+                    color="#008080" 
+                    width="0.22" 
+                    height="0.07"
+                    animation="property: material.opacity; from: 0.6; to: 1.0; dur: 750; dir: alternate; easing: easeInOutSine; loop: true; delay: 150"
+                ></a-plane>
+                <a-text value="Show Abacus" align="center" color="#FFF" scale="0.07 0.07 0.07" position="0 0 0.01" wrap-count="20"></a-text>
+            </a-entity>
+            
+            <a-entity
+                id="show-maps-button"
+                position="0.154 0.259 0.01" 
+                visible="false"
+            > 
+                <a-plane 
+                    id="show-maps-plane" 
+                    class="clickable" 
+                    color="#008080" 
+                    width="0.22" 
+                    height="0.07"
+                    animation="property: material.opacity; from: 0.6; to: 1.0; dur: 750; dir: alternate; easing: easeInOutSine; loop: true; delay: 450"
+                ></a-plane>
+                <a-text value="Show Maps" align="center" color="#FFF" scale="0.07 0.07 0.07" position="0 0 0.01" wrap-count="20"></a-text>
+            </a-entity>
+
+            <a-plane
+                id="panel-overlay"
+                color="#000"
+                opacity="0.75"
+                width="1"
+                height="1.41"
+                position="0 0 0.02"
+                visible="false"
+            ></a-plane>
+
+            <a-entity 
+                id="chronogram-panel-group" 
+                position="0 0 0.50"
+                visible="false"
+            >
+                <a-plane
+                    id="chronogram-panel"
+                    src="#chronogramImage"
+                    height="1.128" 
+                    width="0.8"
+                    position="0 0 0"
+                ></a-plane>
+                
+                <a-entity
+                    id="close-abacus-button-group" 
+                    position="0.365 0.526 0.01"
+                >
+                    <a-plane 
+                        id="close-abacus-plane" 
+                        class="clickable"
+                        color="#CC0000" 
+                        width="0.07" 
+                        height="0.07"
+                        opacity="0.8"
+                        animation="property: material.opacity; from: 0.4; to: 0.8; dur: 750; dir: alternate; easing: easeInOutSine; loop: true"
+                    ></a-plane>
+                    <a-text value="X" align="center" color="#FFF" scale="0.1 0.1 0.1" position="0 0 0.01"></a-text>
+                </a-entity>
+            </a-entity>
+
+            <a-entity 
+                id="maps-panel-group" 
+                position="0 0 0.50"
+                visible="false"
+            >
+                <a-plane
+                    id="maps-panel"
+                    src="#homeRangesImage"
+                    height="1.128" 
+                    width="0.8"
+                    position="0 0 0"
+                ></a-plane>
+                
+                <a-entity
+                    id="close-maps-button-group" 
+                    position="0.365 0.526 0.01"
+                >
+                     <a-plane 
+                        id="close-maps-plane" 
+                        class="clickable"
+                        color="#CC0000" 
+                        width="0.07" 
+                        height="0.07"
+                        opacity="0.8"
+                        animation="property: material.opacity; from: 0.4; to: 0.8; dur: 750; dir: alternate; easing: easeInOutSine; loop: true"
+                    ></a-plane>
+                    <a-text value="X" align="center" color="#FFF" scale="0.1 0.1 0.1" position="0 0 0.01"></a-text>
+                </a-entity>
+            </a-entity>
+
+            <a-entity 
+                id="psat-panel-group" 
+                position="0 0 0.8" 
+                visible="false"
+            >
+                <a-plane
+                    color="#222"
+                    opacity="0.95"
+                    width="0.85"
+                    height="0.6"
+                    position="0 0 0"
+                ></a-plane>
+
+                <a-text
+                    value="PSAT TAG"
+                    color="#4CC3D9"
+                    align="center"
+                    position="0 0.2 0.01"
+                    scale="0.25 0.25 0.25"
+                ></a-text>
+
+                <a-text
+                    value="Type of satellite transmitter used to track the movements and diving behaviour of sharks.\n\nWhen deployed, it records depth, temperature, and light levels, detaches after a programmed period, and sends the data to passing satellites."
+                    color="#FFF"
+                    align="left"
+                    baseline="top"
+                    position="-0.38 0.1 0.01"
+                    scale="0.13 0.13 0.13"
+                    wrap-count="38"
+                    line-height="60"
+                ></a-text>
+
+                <a-entity
+                    id="close-psat-button-group" 
+                    position="0.38 0.25 0.02"
+                >
+                    <a-plane 
+                        id="close-psat-plane"
+                        class="clickable"
+                        color="#CC0000" 
+                        width="0.08" 
+                        height="0.08"
+                        opacity="0.8"
+                    ></a-plane>
+                    <a-text 
+                        value="X" 
+                        align="center" 
+                        color="#FFF" 
+                        scale="0.12 0.12 0.12" 
+                        position="0 0 0.01"
+                    ></a-text>
+                </a-entity>
+            </a-entity>
+
+        </a-entity>
+    </a-scene>
+
+</body>
+</html>

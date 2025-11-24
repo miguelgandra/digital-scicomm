@@ -1,0 +1,12 @@
+# .gitignore
+
+# Ignore these specific folders
+html/
+poster-ar/legacy
+.DS_Store
+media/.DS_Store
+models/.DS_Store
+models/PSAT/
+models/blue_shark/
+models/sixgill-shark-v2
+Models/sixgill-shark.glb
